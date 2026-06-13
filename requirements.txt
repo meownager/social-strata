@@ -1,0 +1,7 @@
+anthropic
+supabase
+sentence-transformers
+streamlit
+python-dotenv
+numpy
+scikit-learn
