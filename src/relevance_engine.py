@@ -8,6 +8,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+
+CampaignStyle = Literal[
+    "Everyday styling",
+    "Product launch",
+    "Summer staple",
+    "Limited drop",
+    "Event reminder",
+]
 
 
 @dataclass(frozen=True)
@@ -178,15 +188,20 @@ def build_relevance_profile(context: ProductContext, product_note: str = "") -> 
     )
 
 
-def generate_output(context: ProductContext, profile: RelevanceProfile) -> GeneratedOutput:
+def generate_output(
+    context: ProductContext,
+    profile: RelevanceProfile,
+    campaign_style: CampaignStyle = "Everyday styling",
+) -> GeneratedOutput:
     """Generate one caption and 5 or 6 hashtags from the relevance profile."""
     if context.product_category == "hijab":
-        caption = _hijab_caption(context, profile)
+        caption = _hijab_caption(context, profile, campaign_style)
     else:
         caption = (
             f"A simple product with a clear purpose: {profile.caption_angle}. "
             f"Made for people who care about {profile.buyer_intent}."
         )
+        caption = apply_campaign_style(caption, campaign_style)
 
     hashtags = _hashtags_for_context(context)
     return GeneratedOutput(caption=caption, hashtags=hashtags[:6])
@@ -212,6 +227,19 @@ def append_event_details(caption: str, event_details: EventDetails) -> str:
     if not event_block:
         return caption
     return f"{caption}\n\n{event_block}"
+
+
+def apply_campaign_style(caption: str, campaign_style: CampaignStyle) -> str:
+    """Adjust the caption angle without changing the product context."""
+    if campaign_style == "Product launch":
+        return f"New arrival: {caption}"
+    if campaign_style == "Summer staple":
+        return f"Your summer staple is here. {caption}"
+    if campaign_style == "Limited drop":
+        return f"Limited drop. {caption} Once it is gone, it is gone."
+    if campaign_style == "Event reminder":
+        return f"Event reminder: {caption}"
+    return caption
 
 
 def _matching_labels(text: str, options: dict[str, list[str]]) -> list[str]:
@@ -250,24 +278,26 @@ def _hijab_caption_angle(attributes: list[str]) -> str:
     return "feel comfortable and confident in everyday modest style"
 
 
-def _hijab_caption(context: ProductContext, profile: RelevanceProfile) -> str:
+def _hijab_caption(context: ProductContext, profile: RelevanceProfile, campaign_style: CampaignStyle) -> str:
     fabric = next((attribute for attribute in context.visible_attributes if attribute in FABRIC_KEYWORDS), "hijab")
     if fabric == "modal":
-        return (
+        caption = (
             "Meet your new everyday staple: soft modal that breathes with you, "
             "drapes beautifully, and keeps you feeling confident through busy summer days."
         )
-    if fabric == "satin":
-        return (
+    elif fabric == "satin":
+        caption = (
             "Soft shine, smooth drape, and an easy polished finish. "
             "A satin hijab made for days when simple still needs to feel special."
         )
-    if fabric == "chiffon":
-        return (
+    elif fabric == "chiffon":
+        caption = (
             "Light, graceful, and easy to style. "
             "A chiffon hijab made for effortless modest looks from morning to evening."
         )
-    return f"A hijab made for {profile.buyer_intent}. {profile.caption_angle.capitalize()}."
+    else:
+        caption = f"A hijab made for {profile.buyer_intent}. {profile.caption_angle.capitalize()}."
+    return apply_campaign_style(caption, campaign_style)
 
 
 def _hashtags_for_context(context: ProductContext) -> list[str]:

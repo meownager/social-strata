@@ -1,6 +1,7 @@
 from src.relevance_engine import (
     EventDetails,
     append_event_details,
+    apply_campaign_style,
     build_relevance_profile,
     format_event_block,
     generate_output,
@@ -84,3 +85,24 @@ def test_event_details_are_appended_only_when_provided() -> None:
     assert "Dates: June 19 and 26, 2026" in caption_with_event
     assert "Time: 1 PM - 4 PM" in caption_with_event
     assert caption_with_event.startswith(caption)
+
+
+def test_campaign_style_changes_caption_angle() -> None:
+    caption = "Meet your new everyday staple."
+
+    assert apply_campaign_style(caption, "Everyday styling") == caption
+    assert apply_campaign_style(caption, "Product launch").startswith("New arrival:")
+    assert "Once it is gone" in apply_campaign_style(caption, "Limited drop")
+
+
+def test_generate_output_accepts_campaign_style() -> None:
+    context = identify_product_context(
+        filename="printed-modal-hijab.jpg",
+        image_size=(900, 1200),
+        product_note="breathable modal hijab",
+    )
+    profile = build_relevance_profile(context)
+    output = generate_output(context, profile, campaign_style="Summer staple")
+
+    assert output.caption.startswith("Your summer staple is here.")
+    assert "soft modal" in output.caption

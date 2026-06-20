@@ -27,6 +27,17 @@ product_note = st.text_input(
     placeholder="Example: handmade candle, satin hijab, skincare serum",
 )
 
+campaign_style = st.selectbox(
+    "Campaign style",
+    [
+        "Everyday styling",
+        "Product launch",
+        "Summer staple",
+        "Limited drop",
+        "Event reminder",
+    ],
+)
+
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded product photo", width="stretch")
@@ -44,7 +55,7 @@ if uploaded_file is not None:
             product_note=product_note,
         )
         profile = build_relevance_profile(context, product_note=product_note)
-        output = generate_output(context, profile)
+        output = generate_output(context, profile, campaign_style=campaign_style)
         event_details = EventDetails(
             location=event_location,
             dates=event_dates,
