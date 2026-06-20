@@ -24,6 +24,20 @@ database = SupabaseDatabase(config)
 st.title("Social-Strata")
 st.caption("Upload a product photo and generate a caption plus focused hashtags.")
 
+with st.sidebar:
+    st.subheader("Database")
+    if database.is_configured():
+        st.success("Supabase keys are configured.")
+    else:
+        st.info("Supabase is not configured yet.")
+
+    if st.button("Check Supabase connection"):
+        connection_status = database.check_connection()
+        if connection_status.connected:
+            st.success(connection_status.reason)
+        else:
+            st.warning(connection_status.reason)
+
 uploaded_file = st.file_uploader(
     "Upload a product photo",
     type=["png", "jpg", "jpeg", "webp"],

@@ -26,6 +26,12 @@ class SaveResult:
     output_id: str | None = None
 
 
+@dataclass(frozen=True)
+class ConnectionStatus:
+    connected: bool
+    reason: str
+
+
 def build_generated_output_row(
     context: ProductContext,
     profile: RelevanceProfile,
@@ -83,3 +89,14 @@ class SupabaseDatabase:
         data = response.data or []
         output_id = data[0].get("id") if data else None
         return SaveResult(saved=True, reason="Saved generated output.", output_id=output_id)
+
+    def check_connection(self) -> ConnectionStatus:
+        if not self.config.has_supabase:
+            return ConnectionStatus(connected=False, reason="Supabase is not configured.")
+
+        try:
+            self._client().table("generated_outputs").select("id").limit(1).execute()
+        except Exception as exc:
+            return ConnectionStatus(connected=False, reason=f"Supabase connection failed: {exc}")
+
+        return ConnectionStatus(connected=True, reason="Supabase is connected.")
