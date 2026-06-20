@@ -1,0 +1,54 @@
+from __future__ import annotations
+
+from PIL import Image
+import streamlit as st
+
+from relevance_engine import build_relevance_profile, generate_output, identify_product_context
+
+
+st.set_page_config(page_title="Social-Strata", page_icon="SS", layout="centered")
+
+st.title("Social-Strata")
+st.caption("Upload a product photo and generate a caption plus focused hashtags.")
+
+uploaded_file = st.file_uploader(
+    "Upload a product photo",
+    type=["png", "jpg", "jpeg", "webp"],
+)
+
+product_note = st.text_input(
+    "Optional product note",
+    placeholder="Example: handmade candle, satin hijab, skincare serum",
+)
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded product photo", use_container_width=True)
+
+    if st.button("Generate caption and hashtags", type="primary"):
+        context = identify_product_context(
+            filename=uploaded_file.name,
+            image_size=image.size,
+            product_note=product_note,
+        )
+        profile = build_relevance_profile(context, product_note=product_note)
+        output = generate_output(context, profile)
+
+        st.subheader("Product Context")
+        st.write(f"Product category: {context.product_category.title()}")
+        st.write(f"Likely use case: {context.likely_use_case}")
+
+        st.subheader("Caption")
+        st.text_area("Copy caption", output.caption, height=120)
+
+        st.subheader("Hashtags")
+        st.text_area("Copy hashtags", " ".join(output.hashtags), height=90)
+
+        with st.expander("Relevance profile"):
+            st.write(f"Audience: {profile.audience}")
+            st.write(f"Buyer intent: {profile.buyer_intent}")
+            st.write(f"Caption angle: {profile.caption_angle}")
+            st.write(f"Tone: {profile.tone}")
+            st.write(f"Hashtag themes: {', '.join(profile.hashtag_themes)}")
+else:
+    st.info("Upload a product photo to start.")
