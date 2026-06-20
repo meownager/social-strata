@@ -7,6 +7,7 @@ from relevance_engine import (
     EventDetails,
     append_event_details,
     build_relevance_profile,
+    format_social_media_post,
     generate_output,
     identify_product_context,
 )
@@ -63,16 +64,21 @@ if uploaded_file is not None:
             closing_line=event_closing,
         )
         caption = append_event_details(output.caption, event_details)
+        hashtag_text = " ".join(output.hashtags)
+        social_media_post = format_social_media_post(caption, output.hashtags)
 
         st.subheader("Product Context")
         st.write(f"Product category: {context.product_category.title()}")
         st.write(f"Likely use case: {context.likely_use_case}")
 
+        st.subheader("Social Media Post")
+        st.text_area("Copy full post", social_media_post, height=240)
+
         st.subheader("Caption")
-        st.text_area("Copy caption", caption, height=160)
+        st.text_area("Copy caption only", caption, height=160)
 
         st.subheader("Hashtags")
-        st.text_area("Copy hashtags", " ".join(output.hashtags), height=90)
+        st.text_area("Copy hashtags only", hashtag_text, height=90)
 
         with st.expander("Relevance profile"):
             st.write(f"Audience: {profile.audience}")

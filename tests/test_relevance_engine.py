@@ -4,6 +4,7 @@ from src.relevance_engine import (
     apply_campaign_style,
     build_relevance_profile,
     format_event_block,
+    format_social_media_post,
     generate_output,
     identify_product_context,
 )
@@ -106,3 +107,12 @@ def test_generate_output_accepts_campaign_style() -> None:
 
     assert output.caption.startswith("Your summer staple is here.")
     assert "soft modal" in output.caption
+
+
+def test_social_media_post_combines_caption_and_hashtags() -> None:
+    post = format_social_media_post(
+        "Meet your new everyday staple.",
+        ["#hijab", "#hijabstyle", "#modal"],
+    )
+
+    assert post == "Meet your new everyday staple.\n\n#hijab #hijabstyle #modal"

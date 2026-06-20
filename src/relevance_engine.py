@@ -229,6 +229,15 @@ def append_event_details(caption: str, event_details: EventDetails) -> str:
     return f"{caption}\n\n{event_block}"
 
 
+def format_social_media_post(caption: str, hashtags: list[str]) -> str:
+    """Combine caption and hashtags into one copy-ready social media post."""
+    clean_caption = caption.strip()
+    hashtag_line = " ".join(tag.strip() for tag in hashtags if tag.strip())
+    if clean_caption and hashtag_line:
+        return f"{clean_caption}\n\n{hashtag_line}"
+    return clean_caption or hashtag_line
+
+
 def apply_campaign_style(caption: str, campaign_style: CampaignStyle) -> str:
     """Adjust the caption angle without changing the product context."""
     if campaign_style == "Product launch":
