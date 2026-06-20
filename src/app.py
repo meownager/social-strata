@@ -3,7 +3,13 @@ from __future__ import annotations
 from PIL import Image
 import streamlit as st
 
-from relevance_engine import build_relevance_profile, generate_output, identify_product_context
+from relevance_engine import (
+    EventDetails,
+    append_event_details,
+    build_relevance_profile,
+    generate_output,
+    identify_product_context,
+)
 
 
 st.set_page_config(page_title="Social-Strata", page_icon="SS", layout="centered")
@@ -23,7 +29,13 @@ product_note = st.text_input(
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded product photo", use_container_width=True)
+    st.image(image, caption="Uploaded product photo", width="stretch")
+
+    with st.expander("Optional event details"):
+        event_location = st.text_input("Event location", placeholder="Example: Al-Huda, Fishers")
+        event_dates = st.text_input("Event dates", placeholder="Example: June 19 and 26, 2026")
+        event_time = st.text_input("Event time", placeholder="Example: 1 PM - 4 PM")
+        event_closing = st.text_input("Closing line", placeholder="Example: See you there")
 
     if st.button("Generate caption and hashtags", type="primary"):
         context = identify_product_context(
@@ -33,13 +45,20 @@ if uploaded_file is not None:
         )
         profile = build_relevance_profile(context, product_note=product_note)
         output = generate_output(context, profile)
+        event_details = EventDetails(
+            location=event_location,
+            dates=event_dates,
+            time=event_time,
+            closing_line=event_closing,
+        )
+        caption = append_event_details(output.caption, event_details)
 
         st.subheader("Product Context")
         st.write(f"Product category: {context.product_category.title()}")
         st.write(f"Likely use case: {context.likely_use_case}")
 
         st.subheader("Caption")
-        st.text_area("Copy caption", output.caption, height=120)
+        st.text_area("Copy caption", caption, height=160)
 
         st.subheader("Hashtags")
         st.text_area("Copy hashtags", " ".join(output.hashtags), height=90)

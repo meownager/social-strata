@@ -1,4 +1,11 @@
-from src.relevance_engine import build_relevance_profile, generate_output, identify_product_context
+from src.relevance_engine import (
+    EventDetails,
+    append_event_details,
+    build_relevance_profile,
+    format_event_block,
+    generate_output,
+    identify_product_context,
+)
 
 
 def test_generates_copy_ready_output_for_known_category() -> None:
@@ -56,3 +63,24 @@ def test_hijab_fabric_can_change_without_changing_product_category() -> None:
     assert "satin" in context.visible_attributes
     assert "polished" in output.caption
     assert "#SatinHijab" in output.hashtags
+
+
+def test_event_details_are_appended_only_when_provided() -> None:
+    caption = "Meet your new everyday staple."
+    empty_details = EventDetails()
+    event_details = EventDetails(
+        location="Al-Huda, Fishers",
+        dates="June 19 and 26, 2026",
+        time="1 PM - 4 PM",
+        closing_line="See you there",
+    )
+
+    assert append_event_details(caption, empty_details) == caption
+
+    event_block = format_event_block(event_details)
+    caption_with_event = append_event_details(caption, event_details)
+
+    assert "Location: Al-Huda, Fishers" in event_block
+    assert "Dates: June 19 and 26, 2026" in caption_with_event
+    assert "Time: 1 PM - 4 PM" in caption_with_event
+    assert caption_with_event.startswith(caption)

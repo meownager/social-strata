@@ -34,6 +34,14 @@ class GeneratedOutput:
     hashtags: list[str]
 
 
+@dataclass(frozen=True)
+class EventDetails:
+    location: str = ""
+    dates: str = ""
+    time: str = ""
+    closing_line: str = ""
+
+
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "candle": ["candle", "scent", "soy", "wax"],
     "jewelry": ["jewelry", "ring", "necklace", "bracelet", "earring"],
@@ -182,6 +190,28 @@ def generate_output(context: ProductContext, profile: RelevanceProfile) -> Gener
 
     hashtags = _hashtags_for_context(context)
     return GeneratedOutput(caption=caption, hashtags=hashtags[:6])
+
+
+def format_event_block(event_details: EventDetails) -> str:
+    """Format optional event details for copy-ready Instagram captions."""
+    lines = []
+    if event_details.location.strip():
+        lines.append(f"Location: {event_details.location.strip()}")
+    if event_details.dates.strip():
+        lines.append(f"Dates: {event_details.dates.strip()}")
+    if event_details.time.strip():
+        lines.append(f"Time: {event_details.time.strip()}")
+    if event_details.closing_line.strip():
+        lines.append(event_details.closing_line.strip())
+    return "\n".join(lines)
+
+
+def append_event_details(caption: str, event_details: EventDetails) -> str:
+    """Append event information only when the user provides it."""
+    event_block = format_event_block(event_details)
+    if not event_block:
+        return caption
+    return f"{caption}\n\n{event_block}"
 
 
 def _matching_labels(text: str, options: dict[str, list[str]]) -> list[str]:
