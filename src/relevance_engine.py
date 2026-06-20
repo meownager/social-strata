@@ -1,4 +1,4 @@
-"""Placeholder relevance logic for the first runnable Social-Strata slice.
+"""Starter relevance logic for the first runnable Social-Strata slice.
 
 This module is intentionally simple. It gives the Streamlit app a working
 product flow before external image models and database services are added.
@@ -38,9 +38,27 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "candle": ["candle", "scent", "soy", "wax"],
     "jewelry": ["jewelry", "ring", "necklace", "bracelet", "earring"],
     "skincare": ["skin", "cream", "serum", "lotion", "soap"],
-    "modest fashion": ["hijab", "abaya", "dress", "scarf", "modest"],
+    "hijab": ["hijab", "khimar", "shayla"],
+    "modest fashion": ["abaya", "dress", "scarf", "modest"],
     "coffee": ["coffee", "mug", "beans", "latte"],
     "bakery": ["cake", "cookie", "bread", "bakery", "cupcake"],
+}
+
+
+FABRIC_KEYWORDS: dict[str, list[str]] = {
+    "modal": ["modal"],
+    "satin": ["satin"],
+    "chiffon": ["chiffon"],
+    "jersey": ["jersey"],
+    "silk": ["silk"],
+}
+
+
+STYLE_KEYWORDS: dict[str, list[str]] = {
+    "printed": ["print", "printed"],
+    "lace": ["lace"],
+    "summer": ["summer", "heat", "breathable", "lightweight"],
+    "non-slip": ["non-slip", "nonslip", "no slip"],
 }
 
 
@@ -48,6 +66,7 @@ HASHTAG_BANK: dict[str, list[str]] = {
     "candle": ["#handmadecandle", "#cozyhome", "#homedecor", "#giftideas", "#smallbusiness"],
     "jewelry": ["#handmadejewelry", "#minimaljewelry", "#everydaystyle", "#giftideas", "#smallbusiness"],
     "skincare": ["#skincare", "#selfcare", "#glowingskin", "#cleanbeauty", "#smallbusiness"],
+    "hijab": ["#hijab", "#hijabfashion", "#hijabstyle", "#modesty", "#modestfashion"],
     "modest fashion": ["#modestfashion", "#hijabstyle", "#everydaymodesty", "#minimalstyle", "#smallbusiness"],
     "coffee": ["#coffeelover", "#coffeetime", "#localcoffee", "#morningroutine", "#smallbusiness"],
     "bakery": ["#freshbaked", "#bakerylove", "#sweettreats", "#localbakery", "#smallbusiness"],
@@ -56,7 +75,7 @@ HASHTAG_BANK: dict[str, list[str]] = {
 
 
 def identify_product_context(filename: str, image_size: tuple[int, int], product_note: str = "") -> ProductContext:
-    """Infer basic product context from filename and optional user note."""
+    """Infer starter product context from filename and optional user note."""
     text = f"{Path(filename).stem} {product_note}".lower()
     product_category = "product"
 
@@ -67,11 +86,14 @@ def identify_product_context(filename: str, image_size: tuple[int, int], product
 
     width, height = image_size
     orientation = "portrait" if height > width else "landscape" if width > height else "square"
+    attributes = [orientation, "uploaded product photo"]
+    attributes.extend(_matching_labels(text, FABRIC_KEYWORDS))
+    attributes.extend(_matching_labels(text, STYLE_KEYWORDS))
 
     return ProductContext(
         product_category=product_category,
-        visible_attributes=[orientation, "uploaded product photo"],
-        style_notes="Clean product-focused visual. More detailed image understanding will be added in the next build step.",
+        visible_attributes=attributes,
+        style_notes=_style_notes(product_category, attributes),
         likely_use_case=_likely_use_case(product_category),
         confidence="starter",
     )
@@ -104,6 +126,14 @@ def build_relevance_profile(context: ProductContext, product_note: str = "") -> 
             caption_angle="make self-care feel easy and consistent",
             tone="fresh and reassuring",
             hashtag_themes=["skincare", "self care", "beauty", "small business"],
+        )
+    if category == "hijab":
+        return RelevanceProfile(
+            audience="students, working women, and modest fashion shoppers",
+            buyer_intent=_hijab_buyer_intent(context.visible_attributes),
+            caption_angle=_hijab_caption_angle(context.visible_attributes),
+            tone="confident, comfortable, simple, and graceful",
+            hashtag_themes=["hijab", "hijab fashion", "hijab style", "modesty", "modest fashion"],
         )
     if category == "modest fashion":
         return RelevanceProfile(
@@ -142,14 +172,82 @@ def build_relevance_profile(context: ProductContext, product_note: str = "") -> 
 
 def generate_output(context: ProductContext, profile: RelevanceProfile) -> GeneratedOutput:
     """Generate one caption and 5 or 6 hashtags from the relevance profile."""
-    category = context.product_category
-    caption = (
-        f"A simple product with a clear purpose: {profile.caption_angle}. "
-        f"Made for people who care about {profile.buyer_intent}."
-    )
-    hashtags = HASHTAG_BANK.get(category, HASHTAG_BANK["product"])
+    if context.product_category == "hijab":
+        caption = _hijab_caption(context, profile)
+    else:
+        caption = (
+            f"A simple product with a clear purpose: {profile.caption_angle}. "
+            f"Made for people who care about {profile.buyer_intent}."
+        )
 
+    hashtags = _hashtags_for_context(context)
     return GeneratedOutput(caption=caption, hashtags=hashtags[:6])
+
+
+def _matching_labels(text: str, options: dict[str, list[str]]) -> list[str]:
+    return [label for label, keywords in options.items() if any(keyword in text for keyword in keywords)]
+
+
+def _style_notes(category: str, attributes: list[str]) -> str:
+    if category == "hijab":
+        details = ", ".join(attribute for attribute in attributes if attribute not in {"portrait", "landscape", "square", "uploaded product photo"})
+        if details:
+            return f"Hijab product with {details} details. Position around comfort, practical styling, and everyday elegance."
+        return "Hijab product. Position around comfort, practical styling, and everyday elegance."
+    return "Clean product-focused visual. More detailed image understanding will be added in the next build step."
+
+
+def _hijab_buyer_intent(attributes: list[str]) -> str:
+    intent = ["comfort", "modesty", "everyday elegance"]
+    if "modal" in attributes:
+        intent.append("soft breathable fabric")
+    if "satin" in attributes:
+        intent.append("smooth polished styling")
+    if "chiffon" in attributes:
+        intent.append("lightweight drape")
+    if "summer" in attributes:
+        intent.append("heat-friendly wear")
+    return ", ".join(intent)
+
+
+def _hijab_caption_angle(attributes: list[str]) -> str:
+    if "summer" in attributes or "modal" in attributes:
+        return "stay cool and put together without compromising comfort"
+    if "satin" in attributes:
+        return "add a polished finish to everyday modest outfits"
+    if "chiffon" in attributes:
+        return "keep the look light, graceful, and easy to style"
+    return "feel comfortable and confident in everyday modest style"
+
+
+def _hijab_caption(context: ProductContext, profile: RelevanceProfile) -> str:
+    fabric = next((attribute for attribute in context.visible_attributes if attribute in FABRIC_KEYWORDS), "hijab")
+    if fabric == "modal":
+        return (
+            "Meet your new everyday staple: soft modal that breathes with you, "
+            "drapes beautifully, and keeps you feeling confident through busy summer days."
+        )
+    if fabric == "satin":
+        return (
+            "Soft shine, smooth drape, and an easy polished finish. "
+            "A satin hijab made for days when simple still needs to feel special."
+        )
+    if fabric == "chiffon":
+        return (
+            "Light, graceful, and easy to style. "
+            "A chiffon hijab made for effortless modest looks from morning to evening."
+        )
+    return f"A hijab made for {profile.buyer_intent}. {profile.caption_angle.capitalize()}."
+
+
+def _hashtags_for_context(context: ProductContext) -> list[str]:
+    hashtags = list(HASHTAG_BANK.get(context.product_category, HASHTAG_BANK["product"]))
+    for attribute in context.visible_attributes:
+        if attribute in FABRIC_KEYWORDS:
+            fabric_tag = f"#{attribute.title().replace(' ', '')}Hijab"
+            if fabric_tag not in hashtags:
+                hashtags.append(fabric_tag)
+    return hashtags
 
 
 def _likely_use_case(category: str) -> str:
@@ -157,6 +255,7 @@ def _likely_use_case(category: str) -> str:
         "candle": "home decor, gifting, and cozy lifestyle content",
         "jewelry": "everyday styling, gifting, and outfit detail content",
         "skincare": "self-care routines and beauty content",
+        "hijab": "everyday modest fashion content for school, work, events, and daily wear",
         "modest fashion": "outfit styling and everyday fashion content",
         "coffee": "daily routine and local cafe content",
         "bakery": "food, celebration, and local treat content",
