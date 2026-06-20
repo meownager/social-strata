@@ -1,127 +1,153 @@
-# Product Requirements Document — Social-Strata
+# Product Requirements Document: Social-Strata
 
-**Version:** 1.0  
-**Author:** Syeda  
-**Last Updated:** June 2026  
-**Status:** Active
-
----
+**Version:** 1.1
+**Last Updated:** June 2026
+**Status:** Active planning
 
 ## Problem Statement
 
-Small and mid-size businesses — especially niche brands in underserved markets like modest fashion, cultural food, or community retail — spend significant time on social media content with little strategic guidance. They either post inconsistently, use the wrong hashtags, or produce captions that don't reflect their brand voice. The tools available (Canva, Later, Hootsuite) help with scheduling and design, but none provide AI-driven, brand-aware content intelligence tailored to niche audiences.
+Small business owners often need to promote products on Instagram, but many do not have the time, technical comfort, or marketing background to understand which captions, hashtags, and content angles are likely to work.
 
-The cost of not solving this: low engagement, wasted effort, and missed growth — especially for early-stage brands that can't afford a full-time social media manager.
+Most caption tools start with text. Social-Strata starts with the product photo. The product image becomes the first source of context, then the system builds relevance around the product and returns simple, copy-ready output.
 
----
+## Product Goal
 
-## Goals
+Social-Strata should help a non-technical user move from product photo to usable Instagram content with the least possible friction.
 
-1. Reduce time spent on caption writing by 70% for small business owners
-2. Increase hashtag relevance (measured by engagement rate on posts using Social-Strata recommendations vs. baseline)
-3. Support multi-business use — one tool usable across any niche, not just fashion
-4. Give non-technical users a clean, no-learning-curve experience
-5. Demonstrate measurable engagement lift within 30 days of use (target: 15% improvement)
+The Phase 1 goal is:
 
----
+> A user uploads a product photo and receives one catchy caption plus 5 or 6 relevant hashtags.
 
-## Non-Goals
+## Primary Users
 
-- **Not a scheduling tool** — we don't post on your behalf; that's a separate product category
-- **Not an analytics dashboard** — we generate content, we don't track performance (v1)
-- **Not Instagram-only** — architecture is platform-agnostic, but v1 focuses on Instagram format
-- **Not a paid SaaS** — this is an open-source portfolio project; monetization is out of scope
-- **Not a design tool** — we don't generate images or graphics
+### Small Business Owner
 
----
+- Sells products through Instagram or wants to start doing so
+- Does not want to learn complicated marketing tools
+- Needs fast, practical content support
+- Wants captions and hashtags that feel relevant to the actual product
 
-## Users
+### Solo Founder Or Local Seller
 
-### Primary User: Small Business Owner / Solo Founder
-- Runs a niche brand (fashion, food, lifestyle, community)
-- Non-technical, time-poor
-- Needs fast, on-brand content without hiring a social media manager
+- Works with limited time and limited budget
+- May not have a social media manager
+- Wants simple output that can be copied and used immediately
 
-### Secondary User: Digital Marketing Consultant / Agency
-- Manages multiple brand accounts
-- Needs consistent, brand-differentiated output across clients
-- Values efficiency and customization per brand
+## User Experience Principles
 
----
+- The user should only need to upload a product photo to begin.
+- Optional fields are allowed, but the app should still work without them.
+- Outputs should be short, clear, and easy to copy.
+- The app should avoid technical language in the user interface.
+- The system should explain less and produce more.
+- The product should stay cloud-based, with no heavy local files stored in the repo.
 
-## User Stories
+## Phase 1 Scope
 
-### Business Owner
-- As a small business owner, I want to input my brand name and niche so that the tool understands my context before generating anything
-- As a small business owner, I want to describe what I'm posting and get a ready-to-use caption so that I don't have to write from scratch
-- As a small business owner, I want hashtag suggestions that are specific to my niche so that I reach the right audience, not just the biggest one
-- As a small business owner, I want my brand profile saved so that I don't have to re-enter my information every time
+### Must Have
 
-### Consultant
-- As a consultant managing multiple brands, I want to switch between business profiles easily so that I can generate content for each client without confusion
-- As a consultant, I want to see clustered hashtag groups so that I can rotate sets across posts and maximize algorithmic reach
+- Product photo upload
+- Product context identification from the uploaded image
+- Product relevance profile
+- Catchy caption output
+- 5 or 6 relevant hashtag outputs
+- Simple Streamlit interface
+- Supabase table for storing generated outputs
+- `.env.example` for required cloud credentials
 
----
+### Should Have
 
-## Requirements
+- Optional business name input
+- Optional product note input
+- Copy-friendly output formatting
+- Basic error handling for missing or unsupported images
+- A clear record of generated output in the database
 
-### P0 — Must Have
-- [ ] Business profile creation (name, niche, tone, target audience)
-- [ ] Caption generation using Claude API with brand context injected into prompt
-- [ ] Hashtag generation using semantic embeddings — not keyword matching
-- [ ] Hashtag clustering — group by meaning so user can rotate sets
-- [ ] Supabase storage for business profiles and generated content history
-- [ ] Streamlit UI — simple, functional, no design knowledge required to use
+### Could Have
 
-### P1 — Nice to Have
-- [ ] Tone selector (e.g. professional, playful, Gen Z, luxury)
-- [ ] Post type selector (product, lifestyle, social proof, event)
-- [ ] Hashtag relevance score displayed per cluster
-- [ ] Export output as text file
+- Tone selector
+- Product category correction by the user
+- Download or copy buttons
+- Basic feedback field so users can rate usefulness
 
-### P2 — Future Consideration
-- [ ] Multi-platform output formatting (TikTok, LinkedIn, Twitter)
-- [ ] Engagement prediction model (which caption/hashtag combo is likely to perform better)
-- [ ] Fine-tuned caption model on brand's historical post data
-- [ ] Analytics integration (pull real engagement data to close the feedback loop)
+## Phase 1 Non-Goals
 
----
+- No automatic Instagram posting
+- No Instagram scraping
+- No paid infrastructure requirement
+- No full analytics dashboard
+- No advanced photo editing
+- No user account system in the first build
+- No heavy image storage inside GitHub
+
+## Phase 2 Scope
+
+Phase 2 focuses on product photo and design support.
+
+Planned capabilities:
+
+- Suggest product photography improvements
+- Suggest background and composition changes
+- Generate product styling recommendations
+- Explore AI-assisted image enhancement using a free or free-tier model where possible
+
+## Phase 3 Scope
+
+Phase 3 focuses on SQL-based marketing analysis.
+
+Planned capabilities:
+
+- Store generated captions and hashtags over time
+- Store product category and relevance data
+- Optionally store user-entered Instagram performance metrics
+- Use SQL to analyze patterns across product categories, captions, hashtags, and performance
+- Turn findings into future strategy recommendations
 
 ## Success Metrics
 
-### Leading Indicators (within 2 weeks of use)
-- Caption generation: time from input to usable output < 30 seconds
-- Hashtag clusters: minimum 3 distinct semantic clusters per query
-- UI completion rate: user successfully generates output on first attempt > 90%
+### Phase 1 Product Metrics
 
-### Lagging Indicators (30 days post-use)
-- Engagement rate lift: 15%+ improvement on posts using Social-Strata output vs. baseline
-- Return usage: user generates content again within 7 days of first use
-- Profile reuse: user saves and reuses brand profile instead of re-entering data
+- User can complete the workflow without technical help
+- Image upload to output takes less than 30 seconds for normal use
+- Output includes exactly one caption and 5 or 6 hashtags
+- User can copy the result without editing the format
 
----
+### Future Impact Metrics
+
+- Caption reuse rate
+- Hashtag reuse rate
+- User feedback score
+- Optional engagement metrics such as likes, saves, comments, and reach
+- Performance changes by product category over time
+
+## Risks And Mitigations
+
+| Risk | Why It Matters | Mitigation |
+|---|---|---|
+| Instagram data access is limited | Direct scraping can be unreliable and risky | Phase 1 uses product relevance logic instead of scraping |
+| Image model quality varies | Wrong product identification creates weak outputs | Let users correct product category later |
+| Free-tier limits | Free APIs may have quotas | Keep model calls minimal and design fallback logic |
+| Output sounds generic | The product loses value if captions feel copied | Use product relevance fields before generating text |
+| Scope creep | The project has multiple future phases | Keep Phase 1 focused on upload, caption, hashtags |
 
 ## Open Questions
 
 | Question | Owner | Blocking? |
 |---|---|---|
-| What embedding model gives best results for niche hashtag clustering? | Engineering | Yes |
-| How many hashtag clusters should we surface per query? | Product | No |
-| Should saved profiles be editable or versioned? | Product | No |
-| What's the right prompt structure for brand-aware captions? | Engineering | Yes |
+| Which free or free-tier multimodal model should be used first? | Engineering | Yes |
+| Should the user be able to correct the detected product category in Phase 1? | Product | No |
+| What fields are required in the first Supabase schema? | Engineering | Yes |
+| Should image files be stored immediately or only metadata at first? | Product and Engineering | No |
+| What feedback metric should be collected first? | Product | No |
 
----
+## Build Order
 
-## Timeline
-
-| Phase | Scope | Target |
-|---|---|---|
-| Phase 1 | Supabase schema + business profile storage | Week 1 |
-| Phase 2 | Embeddings module + hashtag clustering | Week 2-3 |
-| Phase 3 | Claude API caption generator | Week 3-4 |
-| Phase 4 | Streamlit UI wiring everything together | Week 4-5 |
-| Phase 5 | Claude Design mockups + README polish | Week 5-6 |
-
----
-
-*This PRD is a living document — updated as the project evolves.*
+1. Clean documentation and architecture
+2. Update database schema for image-first workflow
+3. Build Streamlit upload page
+4. Connect image understanding service
+5. Build relevance engine
+6. Generate caption and hashtags
+7. Save output metadata to Supabase
+8. Add tests for relevance and output formatting
+9. Deploy a free hosted demo

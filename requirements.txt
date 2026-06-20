@@ -1,7 +1,6 @@
-anthropic
-supabase
-sentence-transformers
 streamlit
+supabase
 python-dotenv
-numpy
-scikit-learn
+pillow
+pandas
+google-genai

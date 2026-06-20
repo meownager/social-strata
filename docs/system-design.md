@@ -1,127 +1,212 @@
-# System Design — Social-Strata
-
-**Version:** 1.0  
-**Author:** Syeda  
-**Last Updated:** June 2026
-
----
+# System Design: Social-Strata
 
 ## Problem Being Solved
 
-Small niche businesses need brand-aware social media content fast. The technical challenge: generic AI tools don't know your brand. We fix that by persisting brand context and using semantic ML (not keyword matching) to make every output actually relevant.
+Social-Strata helps non-technical small business owners create better Instagram content from product photos.
 
----
+The system starts with an image, builds product relevance, then generates a caption and hashtags that match the product context.
 
 ## Functional Requirements
 
-- User can create and save a business profile (name, niche, tone, audience)
-- User can input post context and receive a brand-aware caption
-- User can receive hashtag recommendations clustered by semantic meaning
-- System supports multiple businesses (multi-tenant by design)
-- All data persists in the cloud — nothing stored locally
+### Phase 1
+
+- User can upload a product photo
+- User can optionally add a short product or business note
+- System can identify basic product context
+- System can create a product relevance profile
+- System can return one caption
+- System can return 5 or 6 hashtags
+- System can save generated output metadata to Supabase
+
+### Future Phases
+
+- System can suggest product photography improvements
+- System can support AI-assisted image enhancement
+- System can store optional Instagram performance data
+- System can support SQL analysis over product and marketing data
 
 ## Non-Functional Requirements
 
-- Caption output in < 30 seconds end-to-end
-- Hashtag clusters: minimum 3 groups, 5-8 tags per group
-- Cloud-only: Supabase as single source of truth
-- Open source: clean code, documented, reproducible
+- Simple enough for non-technical users
+- Phase 1 output should appear in under 30 seconds for normal use
+- Cloud-based storage for data and future assets
+- No heavy files stored in GitHub
+- Free or free-tier services wherever possible
+- Modular design so models can change later
 
----
+## Core Data Objects
 
-## Constraints
+### Product Context
 
-- Solo developer, 1-2 hrs/week — must stay simple and modular
-- No paid infrastructure in v1 — Supabase free tier + Anthropic API (pay per use)
-- Python only — no separate backend framework
-- Beginner-friendly codebase — prioritize readability over cleverness
+This is what the image understanding layer returns.
 
----
+Example:
 
-## Embedding Pipeline Design
-
-This is the core ML work. Here's how it works step by step:
-
-```
-Post context (text input)
-        │
-        ▼
-Sentence Transformer model
-(all-MiniLM-L6-v2)
-        │
-        ▼
-384-dimensional vector
-        │
-        ▼
-pgvector similarity search
-(cosine distance against hashtag_embeddings table)
-        │
-        ▼
-Top N similar hashtags returned
-        │
-        ▼
-Cosine similarity grouping
-(cluster into 3-5 semantic groups)
-        │
-        ▼
-Output: hashtag clusters
+```json
+{
+  "product_category": "handmade candle",
+  "visible_attributes": ["glass jar", "neutral label", "warm tone"],
+  "style": "minimal and cozy",
+  "likely_use_case": "home decor or gifting",
+  "confidence": "medium"
+}
 ```
 
-**Why embeddings over keyword matching:**  
-Keyword matching returns obvious hashtags everyone uses. Embeddings capture *meaning* — so a post about "breathable summer hijabs" surfaces tags like `#modestfashionista` and `#summerstyle` that are semantically related but not literal keyword matches. That's the competitive edge.
+### Relevance Profile
 
----
+This is what the relevance engine builds from the product context.
 
-## Caption Prompt Architecture
+Example:
 
-The prompt sent to Claude API is structured — not just "write a caption." Brand context is injected dynamically:
-
-```
-System: You are a social media copywriter for [business_name], 
-        a [niche] brand. Tone: [tone]. Target audience: [audience].
-        Write Instagram captions that sound human, not AI-generated.
-
-User:   Post context: [user input]
-        Write a caption under 150 words. Include a CTA.
+```json
+{
+  "audience": "home decor shoppers and gift buyers",
+  "buyer_intent": "comfort, atmosphere, thoughtful gifting",
+  "caption_angle": "make the room feel warmer",
+  "tone": "warm and simple",
+  "hashtag_themes": ["home decor", "candles", "cozy lifestyle", "small business"]
+}
 ```
 
-This is prompt engineering with intent — every variable comes from the saved business profile.
+### Generated Output
 
----
+This is what the user sees.
 
-## Database Schema Design
+Example:
 
-Three tables. Clean separation of concerns:
-
-```
-businesses          hashtags              generated_content
-──────────          ────────              ─────────────────
-id (PK)             id (PK)               id (PK)
-name                tag                   business_id (FK)
-niche               niche                 post_context
-tone                embedding (vector)    caption
-audience            created_at            hashtag_clusters
-created_at                                created_at
+```json
+{
+  "caption": "A small detail that changes the whole mood of the room.",
+  "hashtags": ["#handmadecandle", "#cozyhome", "#homedecor", "#smallbusiness", "#giftideas"]
+}
 ```
 
-The `hashtags` table is pre-seeded with niche-relevant hashtags per vertical (fashion, food, fitness, etc.) — each one embedded at seed time. At query time, we search this table by vector similarity.
+## Relevance Engine Design
 
----
+The relevance engine is the most important part of the product.
 
-## Trade-off Analysis
+It should not simply ask for a caption from the image model. It should first organize the product context into fields that explain why the output makes sense.
 
-| Trade-off | Option A | Option B | Decision |
-|---|---|---|---|
-| UI framework | Streamlit | FastAPI + React | Streamlit — faster to build, Python-only |
-| Embedding model | OpenAI embeddings | Sentence Transformers | Sentence Transformers — free, runs in cloud env |
-| Vector DB | Pinecone | Supabase pgvector | pgvector — one less service, simpler stack |
-| Caption model | GPT-4 | Claude API | Claude — better instruction following for brand voice |
+Suggested internal steps:
 
----
+1. Identify product category
+2. Extract visible product attributes
+3. Guess likely audience
+4. Identify buyer intent
+5. Select caption angle
+6. Select hashtag themes
+7. Generate caption and hashtags from those fields
 
-## Scaling Path (Not v1, but designed for it)
+This makes the system easier to debug and easier to improve in future phases.
 
-1. **More niches:** Seed the hashtag table with more verticals — no code change needed
-2. **Better embeddings:** Swap `all-MiniLM-L6-v2` for a larger model without changing pipeline
-3. **Auth:** Add Supabase Auth (built-in) when moving toward multi-user public access
-4. **Engagement prediction:** Add a `performance` table to store real engagement data, train a prediction model on top
+## Caption Design
+
+The caption should be created from the relevance profile.
+
+Rules for Phase 1:
+
+- Return one caption only
+- Keep it short
+- Avoid sounding too corporate
+- Avoid overpromising
+- Match the product category and audience
+- Make it easy to copy
+
+## Hashtag Design
+
+The hashtag output should be limited to 5 or 6 hashtags.
+
+Hashtag mix:
+
+- 1 or 2 product category hashtags
+- 1 or 2 audience or lifestyle hashtags
+- 1 small business or niche hashtag
+- 1 caption-angle hashtag if useful
+
+The goal is not maximum quantity. The goal is relevance.
+
+## Database Design Direction
+
+Phase 1 should store generated output data, even before full analytics exists.
+
+Suggested tables:
+
+- `generated_outputs`
+- `product_contexts`
+- `user_feedback` later
+- `instagram_metrics` later
+
+The early schema should support SQL questions like:
+
+```sql
+select product_category, count(*)
+from generated_outputs
+group by product_category
+order by count(*) desc;
+```
+
+Future SQL questions:
+
+```sql
+select product_category, avg(likes) as avg_likes
+from instagram_metrics
+group by product_category
+order by avg_likes desc;
+```
+
+## Model Selection Direction
+
+The model choice should follow the product need.
+
+For Phase 1, the model needs to understand product images well enough to create useful product context. It does not need to do everything.
+
+Selection criteria:
+
+- Has a free or free-tier option
+- Accepts image input
+- Works from a hosted app
+- Has simple Python support
+- Can be replaced later without rewriting the whole app
+
+The code should hide model-specific details behind an image understanding function so the rest of the app does not depend on one provider.
+
+## Why SQL Matters Here
+
+SQL is how Social-Strata becomes measurable.
+
+At first, SQL will help answer simple product questions:
+
+- What product categories are users uploading?
+- What caption angles are most common?
+- What hashtags are generated most often?
+
+Later, SQL can connect outputs to performance:
+
+- Which hashtags appear in higher-performing posts?
+- Which product categories get better engagement?
+- Which caption tones are associated with more saves or comments?
+
+This turns the project from a one-time generator into a product learning loop.
+
+## System Boundaries
+
+### In Scope For Phase 1
+
+- Product image upload
+- Product context extraction
+- Relevance profile
+- Caption and hashtag generation
+- Supabase metadata storage
+
+### Out Of Scope For Phase 1
+
+- Instagram scraping
+- Automatic posting
+- Account management
+- Paid marketing analytics
+- Advanced image editing
+- Full strategy recommendations
+
+## Build Principle
+
+Start with a working small system. Then improve the model, relevance logic, storage, and analysis one layer at a time.
