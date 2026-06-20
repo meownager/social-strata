@@ -2,6 +2,7 @@ from src.relevance_engine import (
     EventDetails,
     append_event_details,
     apply_campaign_style,
+    build_product_note,
     build_relevance_profile,
     format_event_block,
     format_social_media_post,
@@ -116,3 +117,23 @@ def test_social_media_post_combines_caption_and_hashtags() -> None:
     )
 
     assert post == "Meet your new everyday staple.\n\n#hijab #hijabstyle #modal"
+
+
+def test_product_guidance_note_combines_user_inputs() -> None:
+    note = build_product_note(
+        base_note="new summer drop",
+        product_type="Hijab",
+        fabric="Modal",
+        style_details=["Printed", "Lace"],
+    )
+
+    assert note == "new summer drop Hijab Modal Printed Lace"
+
+
+def test_product_guidance_note_can_drive_detection() -> None:
+    note = build_product_note(product_type="Hijab", fabric="Chiffon", style_details=["Summer"])
+    context = identify_product_context(filename="photo.jpg", image_size=(900, 1200), product_note=note)
+
+    assert context.product_category == "hijab"
+    assert "chiffon" in context.visible_attributes
+    assert "summer" in context.visible_attributes

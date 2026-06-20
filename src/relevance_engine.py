@@ -117,6 +117,19 @@ def identify_product_context(filename: str, image_size: tuple[int, int], product
     )
 
 
+def build_product_note(
+    base_note: str = "",
+    product_type: str = "",
+    fabric: str = "",
+    style_details: list[str] | None = None,
+) -> str:
+    """Combine optional user guidance into one detection note."""
+    parts = [base_note.strip(), product_type.strip(), fabric.strip()]
+    if style_details:
+        parts.extend(detail.strip() for detail in style_details)
+    return " ".join(part for part in parts if part)
+
+
 def build_relevance_profile(context: ProductContext, product_note: str = "") -> RelevanceProfile:
     """Turn product context into marketing relevance fields."""
     category = context.product_category
