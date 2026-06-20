@@ -3,6 +3,8 @@ from __future__ import annotations
 from PIL import Image
 import streamlit as st
 
+from config import load_config
+from database import SupabaseDatabase, build_generated_output_row
 from relevance_engine import (
     EventDetails,
     append_event_details,
@@ -15,6 +17,9 @@ from relevance_engine import (
 
 
 st.set_page_config(page_title="Social-Strata", page_icon="SS", layout="centered")
+
+config = load_config()
+database = SupabaseDatabase(config)
 
 st.title("Social-Strata")
 st.caption("Upload a product photo and generate a caption plus focused hashtags.")
@@ -87,6 +92,20 @@ if uploaded_file is not None:
         caption = append_event_details(output.caption, event_details)
         hashtag_text = " ".join(output.hashtags)
         social_media_post = format_social_media_post(caption, output.hashtags)
+        output_row = build_generated_output_row(
+            context=context,
+            profile=profile,
+            output=output,
+            campaign_style=campaign_style,
+            event_details=event_details,
+            social_media_post=social_media_post,
+        )
+        save_result = database.save_generated_output(output_row)
+
+        if save_result.saved:
+            st.success("Output saved to the database.")
+        else:
+            st.info("Output generated locally. Database save skipped because Supabase is not configured yet.")
 
         st.subheader("Product Context")
         st.write(f"Product category: {context.product_category.title()}")
