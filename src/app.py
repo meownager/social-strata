@@ -118,6 +118,8 @@ if uploaded_file is not None:
 
         if save_result.saved:
             st.success("Output saved to the database.")
+            if save_result.output_id:
+                st.caption(f"Saved output ID: {save_result.output_id}")
         else:
             st.info("Output generated locally. Database save skipped because Supabase is not configured yet.")
 
