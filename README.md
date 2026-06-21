@@ -159,11 +159,12 @@ The project direction is cloud-based. Heavy product images and generated assets 
 | README | Updated |
 | PRD | Updated |
 | Architecture docs | Updated |
-| Database schema | Initial draft |
-| Streamlit app | Planned |
-| Image upload workflow | Planned |
-| Caption output | Planned |
-| Hashtag output | Planned |
+| Database schema | Supabase-ready |
+| Streamlit app | Working locally |
+| Image upload workflow | Working locally |
+| Caption output | Working locally |
+| Hashtag output | Working locally |
+| Supabase setup guide | Added |
 | SQL analysis layer | Future phase |
 | Product photo enhancement | Future phase |
 
@@ -178,12 +179,13 @@ social-strata/
 |-- .env.example
 |-- docs/
 |   |-- architecture.md
+|   |-- supabase-setup.md
 |   `-- system-design.md
 `-- data/
     `-- schema.sql
 ```
 
-Source code will be added under `src/` as the application is built.
+Application code lives under `src/`. Supabase setup details are documented in `docs/supabase-setup.md`.
 
 ## Long-Term Goal
 
