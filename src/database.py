@@ -85,7 +85,11 @@ class SupabaseDatabase:
         if not self.config.has_supabase:
             return SaveResult(saved=False, reason="Supabase is not configured.")
 
-        response = self._client().table("generated_outputs").insert(row).execute()
+        try:
+            response = self._client().table("generated_outputs").insert(row).execute()
+        except Exception as exc:
+            return SaveResult(saved=False, reason=f"Supabase save failed: {exc}")
+
         data = response.data or []
         output_id = data[0].get("id") if data else None
         return SaveResult(saved=True, reason="Saved generated output.", output_id=output_id)

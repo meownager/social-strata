@@ -13,11 +13,16 @@ class FakeQuery:
     def __init__(self, data: list[dict[str, str]] | None = None, error: Exception | None = None) -> None:
         self.data = data or []
         self.error = error
+        self.inserted_row: dict[str, str] | None = None
 
     def select(self, _columns: str) -> "FakeQuery":
         return self
 
     def limit(self, _count: int) -> "FakeQuery":
+        return self
+
+    def insert(self, row: dict[str, str]) -> "FakeQuery":
+        self.inserted_row = row
         return self
 
     def execute(self) -> object:
@@ -106,3 +111,30 @@ def test_database_connection_check_reports_failures() -> None:
 
     assert not result.connected
     assert "table missing" in result.reason
+
+
+def test_database_save_reports_failures() -> None:
+    client = FakeClient(FakeQuery(error=RuntimeError("network unavailable")))
+    database = SupabaseDatabase(
+        AppConfig(supabase_url="https://example.supabase.co", supabase_key="anon-key"),
+        client=client,
+    )
+
+    result = database.save_generated_output({"caption": "test"})
+
+    assert not result.saved
+    assert "network unavailable" in result.reason
+
+
+def test_database_save_returns_output_id() -> None:
+    client = FakeClient(FakeQuery(data=[{"id": "saved-row-id"}]))
+    database = SupabaseDatabase(
+        AppConfig(supabase_url="https://example.supabase.co", supabase_key="anon-key"),
+        client=client,
+    )
+
+    result = database.save_generated_output({"caption": "test"})
+
+    assert result.saved
+    assert result.output_id == "saved-row-id"
+    assert client.query.inserted_row == {"caption": "test"}

@@ -121,7 +121,7 @@ if uploaded_file is not None:
             if save_result.output_id:
                 st.caption(f"Saved output ID: {save_result.output_id}")
         else:
-            st.info("Output generated locally. Database save skipped because Supabase is not configured yet.")
+            st.warning(f"Output generated locally. {save_result.reason}")
 
         st.subheader("Product Context")
         st.write(f"Product category: {context.product_category.title()}")
